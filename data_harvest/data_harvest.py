@@ -6,9 +6,9 @@ import pandas as pd
 # ============================================================
 
 ARQUIVOS = {
-    "Kabum": "kabum_produtos.csv",
-    "Samsung": "samsung_produtos.csv",
-    "FastShop": "fastshop_produtos.csv",
+    "Kabum": "./data_harvest/kabum_produtos.csv",
+    "Samsung": "./data_harvest/samsung_produtos.csv",
+    "FastShop": "./data_harvest/fastshop_produtos.csv",
 }
 
 
@@ -194,12 +194,12 @@ print(
 # ============================================================
 
 df.to_csv(
-    "produtos_consolidados.csv",
+    "dados_brutos.csv",
     index=False,
     encoding="utf-8-sig"
 )
 
 print()
 print(
-    "Arquivo gerado: produtos_consolidados.csv"
+    "Arquivo gerado: dados_brutos.csv"
 )
