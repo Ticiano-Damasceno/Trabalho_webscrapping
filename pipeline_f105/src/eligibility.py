@@ -13,9 +13,15 @@ import pandas as pd
 def _motivos_exclusao(linha: pd.Series) -> list[str]:
     motivos = []
 
+    # preco = linha["preco_num"]
+    # if pd.isna(preco) or preco is None or preco <= 0:
+    #     motivos.append("preço inválido/ausente")
+
     preco = linha["preco_num"]
     if pd.isna(preco) or preco is None or preco <= 0:
         motivos.append("preço inválido/ausente")
+    elif preco < 1000:
+        motivos.append("preço incompatível com smartphone do escopo")
 
     vendedor = str(linha["vendedor"]).strip().lower()
     if vendedor == "":
@@ -52,7 +58,6 @@ def _motivos_exclusao(linha: pd.Series) -> list[str]:
         motivos.append(
             "preço depende de cupom/benefício condicional"
         )
-
 
     condicao = str(
         linha.get("condicao", "")
