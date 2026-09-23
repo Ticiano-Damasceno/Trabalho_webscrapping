@@ -9,6 +9,11 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
+def _rotulo_bonito(texto):
+    if texto is None:
+        return ""
+    texto = str(texto).replace("-", " ").strip()
+    return texto.title()
 
 def _salvar(fig, caminho_saida: str):
     os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
@@ -43,26 +48,27 @@ def grafico_preco_medio_por_loja(df_loja: pd.DataFrame, caminho_saida: str):
 #     ax.legend()
 #     _salvar(fig, caminho_saida)
 
-def grafico_menor_vs_maior_por_modelo(df_modelo, caminho_saida):
+def grafico_menor_vs_maior_por_modelo(df_modelo: pd.DataFrame, caminho_saida: str):
+    df_plot = df_modelo[df_modelo["menor_preco"] < df_modelo["maior_preco"]].copy()
 
-    # Apenas configurações com diferença de preço
-    df_plot = df_modelo[
-        df_modelo["menor_preco"] < df_modelo["maior_preco"]
-    ].copy()
+    if df_plot.empty:
+        return
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    df_plot["config_plot"] = df_plot["config"].apply(_rotulo_bonito)
+
+    fig, ax = plt.subplots(figsize=(10, 5.5))
 
     x = range(len(df_plot))
-    largura = 0.38
+    largura = 0.35
 
-    ax.bar(
+    barras1 = ax.bar(
         [i - largura / 2 for i in x],
         df_plot["menor_preco"],
         width=largura,
         label="Menor preço"
     )
 
-    ax.bar(
+    barras2 = ax.bar(
         [i + largura / 2 for i in x],
         df_plot["maior_preco"],
         width=largura,
@@ -70,20 +76,22 @@ def grafico_menor_vs_maior_por_modelo(df_modelo, caminho_saida):
     )
 
     ax.set_xticks(list(x))
-
-    ax.set_xticklabels(
-        df_plot["config"],
-        rotation=45,
-        ha="right"
-    )
-
-    ax.set_title(
-        "Menor vs. maior preço por modelo/configuração"
-    )
-
+    ax.set_xticklabels(df_plot["config_plot"], rotation=0)
+    ax.set_title("Menor vs. maior preço por modelo/configuração")
     ax.set_xlabel("Modelo / configuração")
     ax.set_ylabel("Preço (R$)")
     ax.legend()
+
+    for barra in list(barras1) + list(barras2):
+        altura = barra.get_height()
+        ax.text(
+            barra.get_x() + barra.get_width() / 2,
+            altura + 80,
+            f"R$ {altura:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+            ha="center",
+            va="bottom",
+            fontsize=9
+        )
 
     _salvar(fig, caminho_saida)
 
@@ -105,37 +113,35 @@ def grafico_frequencia_menor_preco(df_freq: pd.DataFrame, caminho_saida: str):
 #     ax.set_ylabel("Modelo / configuração")
 #     _salvar(fig, caminho_saida)
 
-def grafico_economia_percentual(df_modelo, caminho_saida):
+def grafico_economia_percentual(df_modelo: pd.DataFrame, caminho_saida: str):
+    df_plot = df_modelo[df_modelo["economia_percentual"] > 0].copy()
 
-    df_plot = df_modelo[
-        df_modelo["economia_percentual"] > 0
-    ].copy()
+    if df_plot.empty:
+        return
 
-    df_plot = df_plot.sort_values(
-        "economia_percentual"
-    )
+    df_plot["config_plot"] = df_plot["config"].apply(_rotulo_bonito)
+    df_plot = df_plot.sort_values("economia_percentual")
 
-    # Altura aumenta conforme o número de modelos
-    altura = max(
-        5,
-        len(df_plot) * 0.4
-    )
+    fig, ax = plt.subplots(figsize=(9, 4.5))
 
-    fig, ax = plt.subplots(
-        figsize=(9, altura)
-    )
-
-    ax.barh(
-        df_plot["config"],
+    barras = ax.barh(
+        df_plot["config_plot"],
         df_plot["economia_percentual"]
     )
 
-    ax.set_title(
-        "Economia percentual por modelo"
-    )
-
+    ax.set_title("Economia percentual por modelo")
     ax.set_xlabel("Economia (%)")
     ax.set_ylabel("Modelo / configuração")
+
+    for barra in barras:
+        largura = barra.get_width()
+        ax.text(
+            largura + 0.3,
+            barra.get_y() + barra.get_height() / 2,
+            f"{largura:.2f}%",
+            va="center",
+            fontsize=9
+        )
 
     _salvar(fig, caminho_saida)
 
