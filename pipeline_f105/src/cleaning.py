@@ -25,12 +25,10 @@ def normalizar_espacos(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = df[col].astype(str).apply(lambda x: re.sub(r"\s+", " ", x.strip()))
     return df
 
-
 def remover_duplicatas_exatas(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     antes = len(df)
     df2 = df.drop_duplicates().reset_index(drop=True)
     return df2, antes - len(df2)
-
 
 def parsear_preco(texto_preco: str) -> float | None:
     """Converte texto de preço em número. Aceita formatos como:
@@ -52,14 +50,12 @@ def parsear_preco(texto_preco: str) -> float | None:
     except ValueError:
         return None
 
-
 def normalizar_gb(texto: str) -> int | None:
     """Extrai o número de GB de textos como '128 GB', '6', '8GB'."""
     if texto is None or str(texto).strip() == "":
         return None
     m = re.search(r"(\d+)", str(texto).upper().replace(" ", ""))
     return int(m.group(1)) if m else None
-
 
 def tratar(df: pd.DataFrame) -> pd.DataFrame:
     """Pipeline de limpeza completo: normaliza espaços, remove duplicatas
@@ -83,18 +79,10 @@ def tratar(df: pd.DataFrame) -> pd.DataFrame:
 
     df["armazenamento_gb"] = (texto_produto.apply(extrair_armazenamento))
 
-    df["modelo_norm"] = (df["modelo"].apply(
-                lambda x:
-                x.strip()
-                if x.strip() != ""
-                else None
-            )
-        )
-    df["modelo_norm"] = df["modelo"].apply(lambda x: x.strip() if x.strip() != "" else None)
-
+    df["modelo_norm"] = texto_produto.apply(extrair_modelo)
+    
     df.attrs["duplicatas_exatas_removidas"] = n_dup
     return df
-
 
 def extrair_armazenamento(texto: str) -> int | None:
 
@@ -137,5 +125,34 @@ def extrair_ram(texto: str) -> int | None:
         return int(
             resultado.group(1)
         )
+
+    return None
+
+def extrair_modelo(texto: str) -> str | None:
+
+    if texto is None:
+        return None
+
+    texto = str(texto).upper()
+
+    padroes = [
+        (r"\bGALAXY\s+Z\s+FOLD\s*8\s+ULTRA\b", "Galaxy Z Fold8 Ultra"),
+        (r"\bGALAXY\s+Z\s+FOLD\s*8\b", "Galaxy Z Fold8"),
+        (r"\bGALAXY\s+Z\s+FLIP\s*8\b", "Galaxy Z Flip8"),
+
+        (r"\bGALAXY\s+S26\s+ULTRA\b", "Galaxy S26 Ultra"),
+        (r"\bGALAXY\s+S26\+\b", "Galaxy S26+"),
+        (r"\bGALAXY\s+S26\b", "Galaxy S26"),
+
+        (r"\bGALAXY\s+S25\b", "Galaxy S25"),
+        (r"\bGALAXY\s+S24\b", "Galaxy S24"),
+
+        (r"\bGALAXY\s+A57\b", "Galaxy A57"),
+        (r"\bGALAXY\s+A37\b", "Galaxy A37"),
+    ]
+
+    for padrao, modelo in padroes:
+        if re.search(padrao, texto):
+            return modelo
 
     return None
